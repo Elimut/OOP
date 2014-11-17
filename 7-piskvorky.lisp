@@ -26,19 +26,16 @@
 (defmethod state ((self field))
   (slot-value self 'state))
 
-
-
-      ; Vrátí objekt reprezentující rámeček okolo políčka
-      (defun border ()
-         (let ((border (make-instance 'polygon))
-               (A (make-point 0 0))
-               (B (make-point 0 *width*))
-               (C (make-point *width* *width*))
-               (D (make-point *width* 0)))
-
-           (set-items border (list A B C D))
+; Vrátí polygon/rámeček okolo políčka, levy horni roh: 0,0
+(defun border ()
+         (let ((border (make-instance 'polygon)))
+           (set-items border (list (make-point 0 0)
+                                   (make-point 0 *width*)
+                                   (make-point *width* *width*)
+                                   (make-point *width* 0)))
            border))
 
+;levy horni roh: 0,0
 (defun krizek ()
   (let ((pic (make-instance 'picture))
         (half (/ *width* 2))
@@ -49,44 +46,25 @@
 
     (set-thickness pol1 (/ half 3))  
     (set-thickness pol2 (/ half 3))
+    (set-color pic :red)
+    (set-propagate-color-p pic t);polozky obrazku cervene
     (set-items pic (list pol1 pol2))
-    (rotate pic (- pi 4) (make-point 0 0))
+    (move 
+    (rotate pic (- pi 4) (make-point 0 0));otocime o 45stupnu
+      half half);posun: levy horni roh je 0,0
 ))
-  
-
-
-
-       ; Vrátí objekt reprezentující značku prvního hráče - křížek
-       (defun cross ()
-         (let* ((cross (make-instance 'picture))
-                (l1 (make-instance 'polygon))
-                (l2 (make-instance 'polygon)))
-
-           (let* ((a (/ *field-width* 5))
-                  (b (- *field-width* a)))
-             (set-items l1 (list (make-point a a) (make-point b b)))
-             (set-items l2 (list (make-point a b) (make-point b a)))
-      
-             (set-thickness l1 a)
-             (set-thickness l2 a))
-
-           (set-color cross :red)
-           (set-propagate-color-p cross t)
-           (set-items cross (list l1 l2))
-           cross))
-
-       ; Vrátí objekt reprezentující značku druhého hráče - kolečko
-       (defun kolco ()
-         (let* ((c (make-instance 'circle))
-                (half (/ *field-width* 2))
-                (tenth (/ *field-width* 10))
-                (s (make-point half half)))
-
-           (set-center c s)
-           (set-radius c (/ (+ half tenth) 2))
-           (set-thickness c tenth)
-           (set-color c :green)
-           c))
+     
+;graficky objekt hráče - kolečko
+(defun kolecko ()
+         (let* ((cir (make-instance 'circle))
+                (half (/ *width* 2))
+                (thick (/ *width* 10))
+                (r (-  half thick)))                               
+           (set-radius cir r)
+           (set-thickness cir thick)
+           (set-color cir :green)
+           (move cir half half);posun: levy horni roh je 0,0
+))
 
 (defmethod set-state ((self field) value) 
   (unless (and (>= value -1) (<= value 1))
@@ -102,11 +80,8 @@
 
 
 ; Převody
-(defun deg2Rad (degrees)
-  (* (/ degrees 180.0) pi))
-
-(defun rad2Deg (radians)
-  (* (/ radians pi) 180.0))
+(defun deg2Rad (degrees) (* (/ degrees 180.0) pi))
+(defun rad2Deg (radians) (* (/ radians pi) 180.0))
 
 
 
@@ -116,9 +91,10 @@
 (defvar *win*)
 (setf *win* (make-instance 'window))
 
-
+;vyzkousime jednotlive graf prvky
 (set-shape *win* (border))
-(set-shape *win* (move (krizek) *width* *width*))
+(set-shape *win* (kolecko))
+;(set-shape *win* (krizek))
 (redraw *win*)
 
 
