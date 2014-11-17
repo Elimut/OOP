@@ -50,7 +50,8 @@
     (set-thickness pol1 (/ half 3))  
     (set-thickness pol2 (/ half 3))
     (set-items pic (list pol1 pol2))
-    pic))
+    (rotate pic (- pi 4) (make-point 0 0))
+))
   
 
 
@@ -117,7 +118,7 @@
 
 
 (set-shape *win* (border))
-(set-shape *win* (krizek))
+(set-shape *win* (move (krizek) *width* *width*))
 (redraw *win*)
 
 
