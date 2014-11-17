@@ -4,16 +4,13 @@
 
 ; Konfigurace
 (defvar *width* 50)
-(defvar *fields-in-row* 3)
-(defvar *gap-x* 45)
-(defvar *gap-y* 15)
 
 ;; FIELD
 (defclass field (picture) 
   ; Hodnoty:
-  ;    -1 = Křížek
-  ;     0 = Neutrální
-  ;    +1 = Kolečko
+  ;    'X = Křížek     nebo-1/
+  ;    nil = Neutrální nebo 0
+  ;    'O = Kolečko    nebo 1?
   ((state :initform 0)))
 
 ; Vytvoří objekt reprezentující políčko piškvorek
@@ -66,24 +63,18 @@
            (move cir half half);posun: levy horni roh je 0,0
 ))
 
+;mozna lepe state policka jako -1,0,1 misto nil 'O 'X?
 (defmethod set-state ((self field) value) 
-  (unless (and (>= value -1) (<= value 1))
-    (error "Hodnota policka musi byt -1, 0, nebo 1"))
+  (unless (member value (list nil 'X 'O))
+    (error "Hodnota policka musi byt nil, 'O, nebo 'X"))
   
-  (let ((value-image (cond ((= value -1) (cross))
-                           ((= value +1) (kolco))
-                           (t (make-instance 'empty-shape)))))
-
-    (set-items field (list value-image (border)))
-    (setf (slot-value self 'value) value)
-    self))
-
-
-; Převody
-(defun deg2Rad (degrees) (* (/ degrees 180.0) pi))
-(defun rad2Deg (radians) (* (/ radians pi) 180.0))
-
-
+  (let ((xo (cond ((eql value 'X) (krizek))
+                  ((eql value 'O) (kolecko))
+                  (t (make-instance 'empty-shape)))))
+    (set-items self (list xo (border)));oramujeme
+    (setf (slot-value self 'state) value)
+    self
+))
 
 ;; POUŽITÍ
 
@@ -94,44 +85,25 @@
 ;vyzkousime jednotlive graf prvky
 (set-shape *win* (border))
 (set-shape *win* (kolecko))
+(set-shape *win* (make-field 'O))
 ;(set-shape *win* (krizek))
+
+(defvar *board* (make-instance 'picture))
+(let ((m 3);velikost M x N, 5 x 4 jeste vejde do okna
+      (n 2)
+      (fields nil))
+(dotimes (x m)
+  (dotimes (y n)
+;(random 3) vraci 0,1 nebo 2
+;vyzkouset loop + collect
+    (setf fields (cons
+                   (move
+                     (make-field (nth (random 3) '(O X nil)))
+                     (* x *width*)
+                     (* y *width*))
+                   fields))
+    (set-items *board* fields)  
+)))
+
+(set-shape *win* *board*)
 (redraw *win*)
-
-
-#|
-(let ((p (make-instance 'picture))
-      (fields (list (make-field -1)
-                    (make-field 0)
-                    (make-field 1)
-                    (make-field 1)
-                    (make-field -1)
-                    (make-field 0)
-                    (make-field 0)
-                    (make-field 1)
-                    (make-field -1)))
-      (x 0)
-      (y 0))
-
-  (dolist (field fields)
-    (move field 
-          (* *field-width* x)
-          (* *field-width* y))
-
-    (setq x (+ x 1))
-    (if (= x *fields-in-row*)
-        (progn
-          (setq x 0)
-          (setq y (+ y 1)))))
-          
-  (let ((center (make-point (+ *gap-x* (* *fields-in-row* (/ *field-width* 2)))
-                            (+ *gap-y* (* y (/ *field-width* 2))))))
-
-    (set-items p fields)
-
-    (move p *gap-x* *gap-y*)
-    (scale p 1.1 center)
-    (rotate p (deg2rad 45) center)
-
-    (set-shape *win* p)
-    (redraw *win*)))
-|#
